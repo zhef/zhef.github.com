@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- Created by htmlize-1.34 in css mode. -->
+<html>
+  <head>
+    <title>*slime-repl sbcl*</title>
+    <style type="text/css">
+    <!--
+      body {
+        color: #00ff00;
+        background-color: #1f1f1f;
+      }
+      .slime-repl-input {
+        /* slime-repl-input-face */
+        font-weight: bold;
+      }
+      .slime-repl-inputed-output {
+        /* slime-repl-inputed-output-face */
+        color: #ff0000;
+      }
+      .slime-repl-output {
+        /* slime-repl-output-face */
+        color: #ffa07a;
+      }
+      .slime-repl-prompt {
+        /* slime-repl-prompt-face */
+        color: #00ffff;
+      }
+      .slime-repl-result {
+      }
+
+      a {
+        color: inherit;
+        background-color: inherit;
+        font: inherit;
+        text-decoration: inherit;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    -->
+    </style>
+  </head>
+  <body>
+    <pre>
+; SLIME 2.23
+<span class="slime-repl-prompt">CL-USER&gt; </span><span class="slime-repl-input">(defpackage #:test1
+           (:use #:cl))
+(in-package #:test1)
+(defvar var-test11 11)
+(defvar var-test12 12)
+(defvar var-test13 13)
+(defun func-test11 (name)
+  (format t "Hello ~A!" name))
+(defgeneric mtd-test11 (obj)
+  (:method ((obj number))
+    (format t "~A - is number~%" obj))
+  (:method ((obj string))
+    (format t "~A - is string~%" obj)))</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;STANDARD-GENERIC-FUNCTION TEST1::MTD-TEST11 (2)&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST1&gt; </span><span class="slime-repl-input">(defpackage #:test2
+         (:use #:cl))
+(in-package #:test2)
+(defmacro rename-in (&amp;whole whole package &amp;rest symbols)
+  "rename-in description"
+  (let ((macro-name (first whole))
+        (package (find-package (etypecase package
+                                 (string package)
+                                 (symbol (symbol-name package)))))
+        symbol-list)
+    `(progn ,(unless (let ((symbol (find-symbol "SINGLE-QUOTE-READER" *package*)))
+                       (and symbol (boundp symbol)))
+               `(setf (symbol-value 'single-quote-reader) (get-macro-character #\')))
+            ,(unless (fboundp 'single-quote-reader)
+               `(defun single-quote-reader (stream char)
+                  (declare (ignore char))
+                  (let ((symbol (read stream t nil t)))
+                    (if (eq *package* #.*package*)
+                        (if #1=(get ',macro-name symbol)
+                            (list 'quote #1#)
+                            (list 'quote symbol))
+                        (progn (set-macro-character #\' (symbol-value 'single-quote-reader))
+                               (makunbound 'single-quote-reader)
+                               (list 'quote symbol))))))
+            ,(when (eq (get-macro-character #\') #.(get-macro-character #\'))
+               `(set-macro-character #\' #'single-quote-reader))
+            ,@(loop :for (nick symbol) :in symbols
+                    :for original-symbol = #2=(find-symbol (symbol-name symbol) package) :then #2#
+                    :collect (progn (push nick symbol-list)
+                                    (setf (get macro-name nick) original-symbol)
+                                    `(define-symbol-macro ,nick ,original-symbol))
+                    ;; for use symbol-macro in head of form
+                    :when (fboundp original-symbol)
+                      :collect (if (macro-function original-symbol)
+                                   (progn (push (list 'macro nick) symbol-list)
+                                          `(setf (macro-function ',nick) (macro-function ',original-symbol)))
+                                   (progn (push (list 'func nick) symbol-list)
+                                          `(setf (symbol-function ',nick) (symbol-function ',original-symbol))))
+                    :collect `(unintern ',symbol))
+            (format nil "nicknames are made for symbols from the package ~A: ~{~A~^ ~}"
+                    ,(package-name package)
+                    ',(nreverse symbol-list)))))</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">RENAME-IN</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(rename-in #:test1 (v1 var-test11) (f1 func-test11) (m1 mtd-test11))</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">"nicknames are made for symbols from the package TEST1: V1 F1 (FUNC F1) M1 (FUNC
+                                                                           M1)"</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">'v1</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">TEST1::VAR-TEST11</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(find-symbol "VAR-TEST11")</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(find-symbol "VAR-TEST11" (find-package "TEST1"))</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">TEST1::VAR-TEST11</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">:INTERNAL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">v1</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">11</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(symbol-value 'v1)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">11</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(setf (symbol-value 'v1) 55555)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">55555</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">v1</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">55555</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(symbol-name 'v1)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">"VAR-TEST11"</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(symbol-package 'v1)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;PACKAGE "TEST1"&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(f1 "monk")</span>
+<span class="slime-repl-output">Hello monk!
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(m1 25)</span>
+<span class="slime-repl-output">25 - is number
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(m1 "monk")</span>
+<span class="slime-repl-output">monk - is string
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(defmethod m1 ((obj symbol))
+         (format t "~A - is symbol~%" obj))</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;STANDARD-METHOD TEST1::MTD-TEST11 (SYMBOL) {10048BECE3}&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(m1 't)</span>
+<span class="slime-repl-output">T - is symbol
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(find-method #'m1 () '(number))</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;STANDARD-METHOD TEST1::MTD-TEST11 (NUMBER) {10038A7C73}&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(defvar *list* '(11 v1 t test1::var-test11 monk 55555 "v1"))</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">*LIST*</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(position v1 *list*)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">5</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(position 'v1 *list*)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">3</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(get-macro-character #\')</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;FUNCTION SINGLE-QUOTE-READER&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(defpackage #:test3
+           (:use #:cl))
+(in-package #:test3)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;PACKAGE "TEST3"&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST3&gt; </span><span class="slime-repl-input">(get-macro-character #\')</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;FUNCTION TEST2::SINGLE-QUOTE-READER&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST3&gt; </span><span class="slime-repl-input">'t</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">T</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST3&gt; </span><span class="slime-repl-input">(get-macro-character #\')</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;FUNCTION SB-IMPL::READ-QUOTE&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST3&gt; </span><span class="slime-repl-input">(in-package #:test2)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;PACKAGE "TEST2"&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(get-macro-character #\')</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">#&lt;FUNCTION SB-IMPL::READ-QUOTE&gt;</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-result"><span class="slime-repl-inputed-output">NIL</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(position 'v1 *list*)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">1</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">'v1</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">V1</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">v1</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">55555</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(symbol-value 'v1)</span>
+; Evaluation aborted on #&lt;UNBOUND-VARIABLE V1 {1004B80543}&gt;.
+<span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(rename-in #:test1)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">"nicknames are made for symbols from the package TEST1: "</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">'v1</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">TEST1::VAR-TEST11</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span><span class="slime-repl-input">(symbol-value 'v1)</span>
+<span class="slime-repl-result"><span class="slime-repl-inputed-output">55555</span></span><span class="slime-repl-result">
+</span><span class="slime-repl-prompt">TEST2&gt; </span>
+<span class="slime-repl-prompt">TEST2&gt; </span></pre>
+  </body>
+</html>
